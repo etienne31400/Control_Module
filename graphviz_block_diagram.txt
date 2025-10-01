@@ -1,0 +1,59 @@
+
+digraph CONTROL_MODULE_FSM {
+  rankdir=LR;
+  labelloc="t";
+  label="CONTROL_MODULE FSM (updated from corrected VHDL)";
+  fontsize=20;
+  node [shape=box, style="rounded,filled", fillcolor="#f5f5f5", fontname="Helvetica"];
+
+  INTERFACE [label="INTERFACE\nANA_INTERFACE_IN_MODSELECT=0\nANA_PD_EN=1\nCOUNT_DUTY_CYCLE:=0"];
+  LISTEN [label="LISTEN\nLED=001\nANA_PD_EN=1\nCOUNT_DUTY_CYCLE++"];
+  LISTEN_TO_SLEEP [label="LISTEN_TO_SLEEP\nCOUNT_DUTY_CYCLE:=0\nANA_INTERFACE_IN_MODSELECT=1"];
+  SLEEP [label="SLEEP\nLED=111\nCOUNT_DUTY_CYCLE++"];
+  SLEEP_TO_LISTEN [label="SLEEP_TO_LISTEN\nCOUNT_DUTY_CYCLE:=0\nANA_PD_EN=1\nANA_INTERFACE_IN_MODSELECT=0"];
+  START_UP_FSK [label="START_UP_FSK\nLED=010\nANA_FREQ_DIVIDER_EN=1"];
+  START_UP_BACKSCATTER [label="START_UP_BACKSCATTER\nLED=011\nANA_INTERFACE_IN_MODSELECT=0\nANA_MOD_EN=1\nANA_MUX_EN=1\nRESET counters"];
+  BACKSATTER [label="BACKSATTER\nDATA_REG_MUX_SEL = seq_nibble || bitcnt\nbitcnt++\nidle:=0"];
+  WAIT_BACKSATTER [label="WAIT_BACKSATTER\nidle++ (target≈26)"];
+  REPEAT_DATA [label="REPEAT_DATA\nbitcnt:=0\nrepeat++\ndelay_cnt:=0"];
+  SEQUENCE_NEXT [label="SEQUENCE_NEXT\nseq_index++"];
+  DELAY [label="DELAY\ndelay_cnt++ until CFREG_DELAY_DATA_BANK"];
+  START_UP_LISTEN [label="START_UP_LISTEN\nLED=101\nANA_INTERFACE_IN_MODSELECT=0\nANA_FREQ_DIVIDER_EN=0\nANA_MOD_EN=0\nANA_MUX_EN=0"];
+
+  INTERFACE -> LISTEN [label="reset release"];
+
+  LISTEN -> LISTEN_TO_SLEEP [label="OUTFLAG=0 & COUNT_DUTY_CYCLE>=2 & FORCE!=0x03"];
+  LISTEN -> LISTEN [label="OUTFLAG=0 & else"];
+  LISTEN -> START_UP_FSK [label="OUTFLAG=1 & FORCE!=0x02"];
+  LISTEN -> LISTEN [label="OUTFLAG=1 & else"];
+
+  LISTEN_TO_SLEEP -> SLEEP;
+
+  SLEEP -> SLEEP_TO_LISTEN [label="COUNT_DUTY_CYCLE>=15"];
+  SLEEP -> SLEEP [label="else"];
+
+  SLEEP_TO_LISTEN -> LISTEN;
+
+  START_UP_FSK -> START_UP_BACKSCATTER;
+  START_UP_BACKSCATTER -> BACKSATTER;
+
+  BACKSATTER -> REPEAT_DATA [label="bitcnt>=31"];
+  BACKSATTER -> WAIT_BACKSATTER [label="else"];
+
+  WAIT_BACKSATTER -> BACKSATTER [label="idle>=26"];
+  WAIT_BACKSATTER -> WAIT_BACKSATTER [label="else"];
+
+  REPEAT_DATA -> BACKSATTER [label="repeat < CFREG_DATA_BANK_REPEAT & DELAY=0"];
+  REPEAT_DATA -> DELAY [label="repeat < CFREG_DATA_BANK_REPEAT & DELAY>0"];
+  REPEAT_DATA -> SEQUENCE_NEXT [label="repeat reached target"];
+
+  SEQUENCE_NEXT -> START_UP_LISTEN [label="seq_index>=9 OR nibble==1111"];
+  SEQUENCE_NEXT -> BACKSATTER [label="else & DELAY=0"];
+  SEQUENCE_NEXT -> DELAY [label="else & DELAY>0"];
+
+  DELAY -> BACKSATTER [label="delay_cnt==CFREG_DELAY_DATA_BANK"];
+  DELAY -> DELAY [label="else"];
+
+  START_UP_LISTEN -> LISTEN [label="return to duty cycle"];
+}
+

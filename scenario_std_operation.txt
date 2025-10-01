@@ -1,0 +1,80 @@
+-- Scenario: test listen duty cycle, then listen to backscatter on pd flag rise, then backscatter with 1 repeat, 1 cycle delay 
+-- potential issue: there is an additionnal 1 cycle delay when we go through sequence_next (?), that is not here when we repeat, so its inconsistent
+
+CFREG_FORCE_STATE_FSM=00000000
+CFREG_DATA_BANK_SEQUENCE_i = 0000 0001 0010 0011 0100 0101 0111 1000 1111
+CFREG_DELAY_DATA_BANK_REPEAT_i = 1
+All other inputs = 0
+
+reset=0 (active low)
+10 cycles
+reset=1 (hold)
+1 cycle
+Expect result: STATE=LISTEN
+2 cycles
+Expect result: STATE=LISTEN_TO_SLEEP
+1 cycle
+Expect result: STATE=SLEEP
+15 cycles
+Expect result: STATE=SLEEP_TO_LISTEN
+ADD_PD_OUT_OUTFLAG_i=1
+1 cycle
+Expect result: STATE=LISTEN
+1 cycle
+Expect result: STATE=START_UP_FSK
+1 cycle
+Expect result: STATE=START_BACKSCATTER
+1 cycle
+Expect result: STATE=START_UP_BACKSCATTER
+1 cycle
+[(Expect result: STATE=BACKSCATTER
+1 cycle
+Expect result: STATE=WAIT_BACKSCATTER
+26 cycles) *32
+1 cycle
+Expect result: STATE=REPEAT_DATA
+1 cycle
+Expect result: STATE=DELAY
+1 cycle
+(Expect result: STATE=BACKSCATTER
+1 cycle
+Expect result: STATE=WAIT_BACKSCATTER
+26 cycles) *32
+1 cycle
+Expect result: STATE=REPEAT_DATA
+1 cycle
+Expect result: STATE=SEQUENCE_NEXT
+1 cycle
+Expect result: STATE=DELAY
+1 cycle]*7
+(Expect result: STATE=BACKSCATTER
+1 cycle
+Expect result: STATE=WAIT_BACKSCATTER
+26 cycles) *32
+1 cycle
+Expect result: STATE=REPEAT_DATA
+1 cycle
+Expect result: STATE=DELAY
+1 cycle
+(Expect result: STATE=BACKSCATTER
+1 cycle
+Expect result: STATE=WAIT_BACKSCATTER
+26 cycles) *32
+1 cycle
+Expect result: STATE=REPEAT_DATA
+1 cycle
+Expect result: STATE=SEQUENCE_NEXT
+1 cycle
+ADD_PD_OUT_OUTFLAG_i=0
+Expect result: STATE=START_UP_LISTEN
+1 cycle
+Expect result: STATE=LISTEN
+2 cycles
+Expect result: STATE=LISTEN_TO_SLEEP
+1 cycle
+Expect result: STATE=SLEEP
+15 cycles
+Expect result: STATE=SLEEP_TO_LISTEN
+1 cycle
+Expect result: STATE=LISTEN
+END OF TEST

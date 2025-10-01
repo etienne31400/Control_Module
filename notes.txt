@@ -1,0 +1,18 @@
+
+est ce qu'on peut incrementer les clocks dans le process combinatoire comme on a fait ou on doit le metrre dans le process sequentiel (avec clk en sensi)?
+
+data_bank sequence : vecteur de 9x4 bits qui contient les adresses dans l'ordre des reg à envoyer (ex: 0001 0010 0011 va envoyer le 1 2 et 3), si 
+4 bits a 1 -> on envoie rien (pour envoyer que le reg 3 0011 1111 1111 1111 1111 1111 1111 1111 1111)
+
+on garde que un ready pour le power detector les autres seront assez rapides
+
+est ce que POR en condition au debut de la FSM ? car pas POR=pas clock = pas FSM donc le reset de la FSM devrait s'update sur le POR plutot 
+
+
+IMPORTANT:
+Force pas encore dans FSM 
+Utiliser Force seulement pour les etats FSM ? Pour simplifier code? Et mettre un registre de un bit "force" qui dit si on prend les enables de FSM ou de SPI
+
+ajouter etat par defaut dans le process sequentiel
+
+ajouter ID pour chaque etat avec logique (mettre dans bits LED-> rajouter 1 bit pour 14 etats) utiliser pour tests
