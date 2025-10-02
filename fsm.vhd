@@ -175,6 +175,7 @@ ANA_MOD_EN_o												<= i_ANA_MOD_EN;
 				i_COUNT_DATA_BANK_REPEAT <= (others => '0');
 				i_ANA_MOD_EN <= '1';
 				i_ANA_MUX_EN <= '1';
+				i_DATA_REG_MUX_EN <= '1';
 				i_COUNT_SEQUENCE_VECTOR <= (others => '0');
 				i_NEXT_STATE <= BACKSATTER;
 				
@@ -266,3 +267,4 @@ ANA_MOD_EN_o												<= i_ANA_MOD_EN;
 
 
 end architecture rtl;
+
