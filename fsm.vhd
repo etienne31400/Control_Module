@@ -32,7 +32,7 @@ entity CONTROL_MODULE is
     CFREG_DATA_BANK_SELECT_i            : in std_logic_vector(3 downto 0);
     CFREG_DATA_BANK_SEQUENCE_i          : in std_logic_vector(35 downto 0);
     CFREG_DATA_SEL_SINGLE_SEQUENCE_i    : in std_logic;
-    CFREG_DELAY_DATA_BANK_REPEAT_i      : in std_logic_vector(4 downto 0);
+    CFREG_DATA_BANK_DELAY_i      : in std_logic_vector(4 downto 0);
     CFREG_FORCE_STATE_FSM_i             : in std_logic_vector(7 downto 0);
     CFREG_PREAMB_i                      : in std_logic;
     CFREG_REPEAT_WITH_PREAMB_i          : in std_logic;
@@ -58,7 +58,7 @@ architecture rtl of CONTROL_MODULE is
 	signal i_CFREG_DATA_BANK_SELECT											: std_logic_vector(3 downto 0);
 	signal i_CFREG_DATA_BANK_SEQUENCE										: std_logic_vector(35 downto 0);
 	signal i_CFREG_DATA_SEL_SINGLE_SEQUENCE									: std_logic;
-	signal i_CFREG_DELAY_DATA_BANK											: std_logic_vector(4 downto 0);
+	signal i_CFREG_DATA_BANK_DELAY											: std_logic_vector(4 downto 0);
 	signal i_CFREG_FORCE_STATE_FSM											: std_logic_vector(7 downto 0);
 	signal i_CFREG_PREAMB													: std_logic;
 	signal i_CFREG_REPEAT_WITH_PREAMB										: std_logic;
@@ -82,7 +82,7 @@ i_CFREG_DATA_BANK_REPEAT	         	<= CFREG_DATA_BANK_REPEAT_i;
 i_CFREG_DATA_BANK_SELECT	         	<= CFREG_DATA_BANK_SELECT_i;       
 i_CFREG_DATA_BANK_SEQUENCE	       	<= CFREG_DATA_BANK_SEQUENCE_i;      
 i_CFREG_DATA_SEL_SINGLE_SEQUENCE	 	<= CFREG_DATA_SEL_SINGLE_SEQUENCE_i;
-i_CFREG_DELAY_DATA_BANK	   					<= CFREG_DELAY_DATA_BANK_REPEAT_i;  
+i_CFREG_DATA_BANK_DELAY	   					<= CFREG_DATA_BANK_DELAY_i;  
 i_CFREG_FORCE_STATE_FSM	          	<= CFREG_FORCE_STATE_FSM_i;         
 i_CFREG_PREAMB	                   	<= CFREG_PREAMB_i;                  
 i_CFREG_REPEAT_WITH_PREAMB	       	<= CFREG_REPEAT_WITH_PREAMB_i;
@@ -225,7 +225,7 @@ ANA_MOD_EN_o												<= i_ANA_MOD_EN;
 				i_COUNT_DATA_BANK_REPEAT <= std_logic_vector(unsigned(i_COUNT_DATA_BANK_REPEAT) + 1);
 				i_DELAY_DATA_BANK_COUNTER <= (others => '0');
 				if unsigned(i_COUNT_DATA_BANK_REPEAT) < unsigned(i_CFREG_DATA_BANK_REPEAT) then
-					if i_CFREG_DELAY_DATA_BANK = "00000" then
+					if i_CFREG_DATA_BANK_DELAY = "00000" then
 						i_NEXT_STATE <= BACKSATTER;
 					else
 						i_NEXT_STATE <= DELAY;
@@ -239,16 +239,16 @@ ANA_MOD_EN_o												<= i_ANA_MOD_EN;
 				if (unsigned(i_COUNT_SEQUENCE_VECTOR)) >= 9 or (i_CFREG_DATA_BANK_SEQUENCE((to_integer(unsigned(i_COUNT_SEQUENCE_VECTOR))+1)*4-1 downto to_integer(unsigned(i_COUNT_SEQUENCE_VECTOR))*4) = "1111") then
 					i_NEXT_STATE <= START_UP_LISTEN;
 				else
-					if i_CFREG_DELAY_DATA_BANK = "00000" then
+					if i_CFREG_DATA_BANK_DELAY = "00000" then
 						i_NEXT_STATE <= BACKSATTER;
 					else
 						i_NEXT_STATE <= DELAY;
 					end if;
 				end if;
 					
-      when DELAY =>  -- increment delay counter until equal to i_CFREG_DELAY_DATA_BANK, then goes back to backscatter
+      when DELAY =>  -- increment delay counter until equal to i_CFREG_DATA_BANK_DELAY, then goes back to backscatter
 			i_DELAY_DATA_BANK_COUNTER <= std_logic_vector(unsigned(i_DELAY_DATA_BANK_COUNTER) + 1);
-			if unsigned(i_DELAY_DATA_BANK_COUNTER) < unsigned(i_CFREG_DELAY_DATA_BANK) then
+			if unsigned(i_DELAY_DATA_BANK_COUNTER) < unsigned(i_CFREG_DATA_BANK_DELAY) then
 				i_NEXT_STATE <= DELAY;
 			else
 				i_NEXT_STATE <= BACKSATTER;
@@ -267,4 +267,5 @@ ANA_MOD_EN_o												<= i_ANA_MOD_EN;
 
 
 end architecture rtl;
+
 
