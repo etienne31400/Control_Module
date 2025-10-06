@@ -10,6 +10,8 @@ reset=0 (active low)
 10 cycles
 reset=1 (hold)
 1 cycle
+Expect result: STATE=INTERFACE
+1 cycle
 Expect result: STATE=LISTEN
 2 cycles
 Expect result: STATE=LISTEN_TO_SLEEP
@@ -77,4 +79,5 @@ Expect result: STATE=SLEEP
 Expect result: STATE=SLEEP_TO_LISTEN
 1 cycle
 Expect result: STATE=LISTEN
+
 END OF TEST
