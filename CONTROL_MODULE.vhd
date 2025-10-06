@@ -81,7 +81,7 @@ i_CFREG_DATA_BANK_REPEAT	         	<= CFREG_DATA_BANK_REPEAT_i;
 i_CFREG_DATA_BANK_SELECT	         	<= CFREG_DATA_BANK_SELECT_i;       
 i_CFREG_DATA_BANK_SEQUENCE	       	<= CFREG_DATA_BANK_SEQUENCE_i;      
 i_CFREG_DATA_SEL_SINGLE_SEQUENCE	 	<= CFREG_DATA_SEL_SINGLE_SEQUENCE_i;
-i_CFREG_DELAY_DATA_BANK	   					<= CFREG_DATA_BANK_DELAY_i;  
+i_CFREG_DATA_BANK_DELAY	   					<= CFREG_DATA_BANK_DELAY_i;  
 i_CFREG_FORCE_STATE_FSM	          	<= CFREG_FORCE_STATE_FSM_i;         
 i_CFREG_PREAMB	                   	<= CFREG_PREAMB_i;                  
 i_CFREG_REPEAT_WITH_PREAMB	       	<= CFREG_REPEAT_WITH_PREAMB_i;
@@ -124,6 +124,7 @@ begin
         i_COUNT_DUTY_CYCLE <= std_logic_vector(unsigned(i_COUNT_DUTY_CYCLE) + 1);
 			when START_UP_BACKSCATTER =>
 				i_COUNT_DATA_BANK_REPEAT <= (others => '0');
+				i_COUNT_SEQUENCE_VECTOR <= (others => '0');
 			when BACKSATTER =>
 				i_COUNT_DUTY_CYCLE <= (others => '0');
 				i_COUNT_IDLE_BACKSAT <= (others => '0');
@@ -132,6 +133,11 @@ begin
 				i_COUNT_IDLE_BACKSAT <= std_logic_vector(unsigned(i_COUNT_IDLE_BACKSAT) + 1);
 			when REPEAT_DATA =>
 				i_COUNT_DATA_BANK_REPEAT <= std_logic_vector(unsigned(i_COUNT_DATA_BANK_REPEAT) + 1);
+				i_DELAY_DATA_BANK_COUNTER <= (others => '0');
+			when SEQUENCE_NEXT =>
+				i_COUNT_SEQUENCE_VECTOR <= std_logic_vector(unsigned(i_COUNT_SEQUENCE_VECTOR) + 1);
+			when DELAY =>
+				i_DELAY_DATA_BANK_COUNTER <= std_logic_vector(unsigned(i_DELAY_DATA_BANK_COUNTER) + 1);
       when others =>
         i_COUNT_DUTY_CYCLE <= (others => '0');
     end case;
@@ -140,7 +146,7 @@ end process;
 
 
   --process(i_CURRENT_STATE, i_ADD_PD_OUT_OUTFLAG, i_COUNT_DUTY_CYCLE, i_COUNT_BB_DATA, i_COUNT_DATA_BANK_REPEAT, i_COUNT_SEQUENCE_VECTOR, i_COUNT_IDLE_BACKSAT, i_DELAY_DATA_BANK_COUNTER, i_CFREG_FORCE_STATE_FSM, i_ADD_PD_STA_OUT_READY)
-	process(i_CURRENT_STATE, i_ADD_PD_OUT_OUTFLAG, i_COUNT_DUTY_CYCLE, i_COUNT_BB_DATA, i_COUNT_DATA_BANK_REPEAT, i_COUNT_SEQUENCE_VECTOR, i_COUNT_IDLE_BACKSAT, i_DELAY_DATA_BANK_COUNTER, i_CFREG_FORCE_STATE_FSM, i_ADD_PD_STA_OUT_READY, i_CFREG_DATA_BANK_SEQUENCE, i_CFREG_DATA_BANK_REPEAT, i_CFREG_DELAY_DATA_BANK)
+	process(i_CURRENT_STATE, i_ADD_PD_OUT_OUTFLAG, i_COUNT_DUTY_CYCLE, i_COUNT_BB_DATA, i_COUNT_DATA_BANK_REPEAT, i_COUNT_SEQUENCE_VECTOR, i_COUNT_IDLE_BACKSAT, i_DELAY_DATA_BANK_COUNTER, i_CFREG_FORCE_STATE_FSM, i_ADD_PD_STA_OUT_READY, i_CFREG_DATA_BANK_SEQUENCE, i_CFREG_DATA_BANK_REPEAT, i_CFREG_DATA_BANK_DELAY)
 
   begin	
 		i_NEXT_STATE <= i_CURRENT_STATE;  -- par défaut, rester dans l’état courant
@@ -149,11 +155,8 @@ end process;
     i_PORT_STA_LED <= (others => '0');
     i_ANA_FREQ_DIVIDER_EN <= '0';
     i_DATA_REG_MUX_EN <= '0';
-    i_COUNT_SEQUENCE_VECTOR <= (others => '0');
-    i_COUNT_DATA_BANK_REPEAT <= (others => '0');
     i_ANA_MUX_EN <= '0';
     i_ANA_MOD_EN <= '0';
-    i_DELAY_DATA_BANK_COUNTER <= (others => '0');
     case i_CURRENT_STATE is
 			
       --when IDLE =>
@@ -211,7 +214,6 @@ end process;
 				i_PORT_STA_LED <= "011";
 				i_ANA_MOD_EN <= '1';
 				i_ANA_MUX_EN <= '1';
-				i_COUNT_SEQUENCE_VECTOR <= (others => '0');
 				i_NEXT_STATE <= BACKSATTER;
 			
       when BACKSATTER => -- adress of each bit from concatenation of (MSB) sequence and (LSB) bit counter, increment bit counter, initialize idle counter (for 40ms bit duration) and switch to idle state (wait backscatter) after each bit counter increment, switch to next 32 bits register after all bits sent
@@ -230,7 +232,6 @@ end process;
 				end if;
 			
 			when REPEAT_DATA => -- reset bit counter, increment repeat counter, go to backscatter state if repeat, to delay state if delay, else to SEQUENCE_NEXT
-				i_DELAY_DATA_BANK_COUNTER <= (others => '0');
 				if unsigned(i_COUNT_DATA_BANK_REPEAT) < unsigned(i_CFREG_DATA_BANK_REPEAT) then
 					if i_CFREG_DATA_BANK_DELAY = "00000" then
 						i_NEXT_STATE <= BACKSATTER;
@@ -242,8 +243,7 @@ end process;
 				end if;
 				
 			when SEQUENCE_NEXT => -- increment sequence counter, go to listen state if at the end of sequence or if rest of sequence is 1111 (skipped)
-				i_COUNT_SEQUENCE_VECTOR <= std_logic_vector(unsigned(i_COUNT_SEQUENCE_VECTOR) + 1);
-				if (unsigned(i_COUNT_SEQUENCE_VECTOR)) >= 9 or (i_CFREG_DATA_BANK_SEQUENCE((to_integer(unsigned(i_COUNT_SEQUENCE_VECTOR))+1)*4-1 downto to_integer(unsigned(i_COUNT_SEQUENCE_VECTOR))*4) = "1111") then
+				if (unsigned(i_COUNT_SEQUENCE_VECTOR)) >= 8 or (i_CFREG_DATA_BANK_SEQUENCE((to_integer(unsigned(i_COUNT_SEQUENCE_VECTOR))+2)*4-1 downto (to_integer(unsigned(i_COUNT_SEQUENCE_VECTOR))+1)*4) = "1111") then
 					i_NEXT_STATE <= START_UP_LISTEN;
 				else
 					if i_CFREG_DATA_BANK_DELAY = "00000" then
@@ -254,7 +254,6 @@ end process;
 				end if;
 					
       when DELAY =>  -- increment delay counter until equal to i_CFREG_DELAY_DATA_BANK, then goes back to backscatter
-			i_DELAY_DATA_BANK_COUNTER <= std_logic_vector(unsigned(i_DELAY_DATA_BANK_COUNTER) + 1);
 			if unsigned(i_DELAY_DATA_BANK_COUNTER) < unsigned(i_CFREG_DATA_BANK_DELAY) then
 				i_NEXT_STATE <= DELAY;
 			else

@@ -15,7 +15,7 @@ module tb_control_module;
 	logic [3:0] 	CFREG_DATA_BANK_SELECT_i;        
 	logic [35:0] 	CFREG_DATA_BANK_SEQUENCE_i;      
 	logic 				CFREG_DATA_SEL_SINGLE_SEQUENCE_i;
-	logic [4:0] 	CFREG_DELAY_DATA_BANK_REPEAT_i;  
+	logic [4:0] 	CFREG_DATA_BANK_DELAY_i;  
 	logic [7:0] 	CFREG_FORCE_STATE_FSM_i;         
 	logic 				CFREG_PREAMB_i;                  
 	logic 				CFREG_REPEAT_WITH_PREAMB_i;      	
@@ -26,7 +26,7 @@ module tb_control_module;
 	CONTROL_MODULE dut (.*);
 	
 	initial MAIN_CLK_i = 0;
-	always #10 MAIN_CLK_i = ~MAIN_CLK_i;
+	always #2ms MAIN_CLK_i = ~MAIN_CLK_i;
 	
 	initial
 	begin
@@ -35,9 +35,9 @@ module tb_control_module;
 		ADD_PD_STA_OUT_READY_i = 0;
 		CFREG_DATA_BANK_REPEAT_i = 4'b0000;
 		CFREG_DATA_BANK_SELECT_i = 4'b0000;
-		CFREG_DATA_BANK_SEQUENCE_i = 36'b000000010010001101000101011110001111;
+		CFREG_DATA_BANK_SEQUENCE_i = 36'b111111111111010101000011001000010000;
 		CFREG_DATA_SEL_SINGLE_SEQUENCE_i = 0;
-		CFREG_DELAY_DATA_BANK_REPEAT_i = 5'b00001;
+		CFREG_DATA_BANK_DELAY_i = 5'b00001;
 		CFREG_FORCE_STATE_FSM_i = 8'b00000000;
 		CFREG_PREAMB_i = 0;
 		CFREG_REPEAT_WITH_PREAMB_i = 0;
